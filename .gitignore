@@ -44,3 +44,6 @@ next-env.d.ts
 node_modules
 .env
 .next
+
+node_modules
+backend/node_modules
