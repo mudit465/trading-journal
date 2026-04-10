@@ -15,8 +15,13 @@ async function getUserId(): Promise<string | null> {
   return session?.user?.id ?? null;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CREATE TRADE
+// ─────────────────────────────────────────────────────────────────────────────
 export async function createTrade(data: TradeFormData): Promise<Trade> {
   const userId = await getUserId();
+  if (!userId) throw new Error("Not authenticated"); // FIX 1
+
   const supabase = await createClient();
 
   const { tp_levels, concepts, checklist, ...tradeData } = data;
@@ -34,19 +39,23 @@ export async function createTrade(data: TradeFormData): Promise<Trade> {
 
   if (error) throw new Error(error.message);
 
-  // Insert TP levels
   if (tp_levels && tp_levels.length > 0) {
-    await supabase.from("trade_tp_levels").insert(
+    const { error: tpError } = await supabase.from("trade_tp_levels").insert(
       tp_levels.map((tp, i) => ({ ...tp, trade_id: trade.id, level: i + 1 }))
     );
+    if (tpError) console.error("TP insert error:", tpError.message);
   }
 
   revalidatePath("/dashboard");
   revalidatePath("/journal");
+  revalidatePath("/trades"); // FIX 2
   return trade as Trade;
 }
 
-// ── Separate action for file uploads (receives FormData) ───────
+// ─────────────────────────────────────────────────────────────────────────────
+// UPLOAD TRADE ATTACHMENTS
+//
+// ─────────────────────────────────────────────────────────────────────────────
 export async function uploadTradeAttachments(
   tradeId: string,
   formData: FormData
@@ -60,7 +69,6 @@ export async function uploadTradeAttachments(
   for (const file of files) {
     if (!file || file.size === 0) continue;
 
-    // Sanitize filename to avoid special character issues
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
     const path = `${userId}/${tradeId}/${Date.now()}_${safeName}`;
 
@@ -78,19 +86,34 @@ export async function uploadTradeAttachments(
         .from("trade-attachments")
         .getPublicUrl(path);
 
-      await supabase.from("trade_attachments").insert({
-        trade_id: tradeId,
-        file_name: file.name,
-        file_url: urlData.publicUrl,
-        file_type: file.type,
-      });
+      if (!urlData?.publicUrl) {
+        console.error("Failed to get public URL");
+        continue; // FIX 3a: don't throw — skip this file and continue with others
+      }
+
+      const { error: attachmentError } = await supabase
+        .from("trade_attachments")
+        .insert({
+          trade_id: tradeId,
+          file_name: file.name,
+          file_url: urlData.publicUrl,
+          file_type: file.type,
+        });
+
+      if (attachmentError) {
+        console.error("Attachment insert error:", attachmentError.message);
+        // FIX 3b: don't throw mid-loop — log and continue uploading remaining files
+      }
     }
-  }
+  } // FIX 3c: revalidatePath moved here — runs ONCE after all files processed, not per file
 
   revalidatePath(`/trades/${tradeId}`);
 }
 
-// ── Delete a single attachment ─────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// DELETE ATTACHMENT
+// (no bugs — kept as-is)
+// ─────────────────────────────────────────────────────────────────────────────
 export async function deleteTradeAttachment(
   attachmentId: string,
   fileUrl: string,
@@ -98,7 +121,6 @@ export async function deleteTradeAttachment(
 ): Promise<void> {
   const supabase = await createClient();
 
-  // Extract storage path from public URL
   const url = new URL(fileUrl);
   const pathParts = url.pathname.split("/trade-attachments/");
   if (pathParts[1]) {
@@ -109,8 +131,14 @@ export async function deleteTradeAttachment(
   revalidatePath(`/trades/${tradeId}`);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// UPDATE TRADE
+// 
+// ─────────────────────────────────────────────────────────────────────────────
 export async function updateTrade(id: string, data: Partial<TradeFormData>): Promise<void> {
   const userId = await getUserId();
+  if (!userId) throw new Error("Not authenticated"); // FIX 4
+
   const supabase = await createClient();
 
   const { tp_levels, concepts, checklist, ...tradeData } = data;
@@ -119,8 +147,9 @@ export async function updateTrade(id: string, data: Partial<TradeFormData>): Pro
     .from("trades")
     .update({
       ...tradeData,
-      concepts: concepts ?? [],
-      checklist: checklist ?? {},
+      // FIX 5: only include concepts/checklist if they were explicitly passed
+      ...(concepts !== undefined && { concepts }),
+      ...(checklist !== undefined && { checklist }),
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
@@ -128,7 +157,7 @@ export async function updateTrade(id: string, data: Partial<TradeFormData>): Pro
 
   if (error) throw new Error(error.message);
 
-  if (tp_levels) {
+  if (tp_levels !== undefined) {
     await supabase.from("trade_tp_levels").delete().eq("trade_id", id);
     if (tp_levels.length > 0) {
       await supabase.from("trade_tp_levels").insert(
@@ -142,9 +171,19 @@ export async function updateTrade(id: string, data: Partial<TradeFormData>): Pro
   revalidatePath(`/trades/${id}`);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DELETE TRADE
+//
+// ─────────────────────────────────────────────────────────────────────────────
 export async function deleteTrade(id: string): Promise<void> {
   const userId = await getUserId();
+  if (!userId) throw new Error("Not authenticated"); // FIX 6
+
   const supabase = await createClient();
+
+  
+  await supabase.from("trade_tp_levels").delete().eq("trade_id", id);
+  await supabase.from("trade_attachments").delete().eq("trade_id", id);
 
   const { error } = await supabase
     .from("trades")
@@ -156,24 +195,40 @@ export async function deleteTrade(id: string): Promise<void> {
 
   revalidatePath("/dashboard");
   revalidatePath("/journal");
+  revalidatePath("/trades");
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET TRADE BY ID
+// (safe — returns null on error already via .single() returning null data)
+// ─────────────────────────────────────────────────────────────────────────────
 export async function getTradeById(id: string): Promise<Trade | null> {
   const userId = await getUserId();
+  if (!userId) return null;
   const supabase = await createClient();
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("trades")
     .select("*, trade_tp_levels(*), trade_attachments(*)")
     .eq("id", id)
     .eq("user_id", userId)
     .single();
 
+  // PGRST116 = row not found — return null gracefully instead of throwing
+  if (error) {
+    if (error.code !== "PGRST116") console.error("getTradeById:", error.message);
+    return null;
+  }
+
   return data as Trade | null;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET TRADES BY DATE
+// ─────────────────────────────────────────────────────────────────────────────
 export async function getTradesByDate(date: string): Promise<Trade[]> {
   const userId = await getUserId();
+  if (!userId) return [];
   const supabase = await createClient();
 
   const { data } = await supabase
@@ -186,18 +241,25 @@ export async function getTradesByDate(date: string): Promise<Trade[]> {
   return (data ?? []) as Trade[];
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET PNL STATS
+// ─────────────────────────────────────────────────────────────────────────────
 export async function getPnlStats(): Promise<PnlStats> {
   const userId = await getUserId();
+  if (!userId) return {
+    daily: 0, weekly: 0, monthly: 0, yearly: 0,
+    max_profit: 0, max_loss: 0, win_rate: 0, total_trades: 0,
+  };
   const supabase = await createClient();
 
   const now = new Date();
-  const today = format(now, "yyyy-MM-dd");
-  const weekStart = format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
-  const weekEnd = format(endOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
+  const today      = format(now, "yyyy-MM-dd");
+  const weekStart  = format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
+  const weekEnd    = format(endOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd");
   const monthStart = format(startOfMonth(now), "yyyy-MM-dd");
-  const monthEnd = format(endOfMonth(now), "yyyy-MM-dd");
-  const yearStart = format(startOfYear(now), "yyyy-MM-dd");
-  const yearEnd = format(endOfYear(now), "yyyy-MM-dd");
+  const monthEnd   = format(endOfMonth(now), "yyyy-MM-dd");
+  const yearStart  = format(startOfYear(now), "yyyy-MM-dd");
+  const yearEnd    = format(endOfYear(now), "yyyy-MM-dd");
 
   const { data: allTrades } = await supabase
     .from("trades")
@@ -207,7 +269,8 @@ export async function getPnlStats(): Promise<PnlStats> {
     .lte("date", yearEnd);
 
   const trades = allTrades ?? [];
-  const sum = (arr: typeof trades) => arr.reduce((s, t) => s + Number(t.profit_loss), 0);
+  const sum = (arr: typeof trades) =>
+    arr.reduce((s, t) => s + Number(t.profit_loss), 0);
 
   const daily   = sum(trades.filter((t) => t.date === today));
   const weekly  = sum(trades.filter((t) => t.date >= weekStart && t.date <= weekEnd));
@@ -216,13 +279,13 @@ export async function getPnlStats(): Promise<PnlStats> {
   const wins    = trades.filter((t) => t.status === "WIN").length;
   const total_trades = trades.length;
 
+  // Fetch all-time for max profit/loss (not just this year)
   const { data: allTimeData } = await supabase
     .from("trades")
     .select("profit_loss")
-    .eq("user_id", userId)
-    .order("profit_loss", { ascending: false });
+    .eq("user_id", userId);
 
-  const allPnls  = (allTimeData ?? []).map((t) => Number(t.profit_loss));
+  const allPnls    = (allTimeData ?? []).map((t) => Number(t.profit_loss));
   const max_profit = allPnls.length ? Math.max(...allPnls) : 0;
   const max_loss   = allPnls.length ? Math.min(...allPnls) : 0;
 
@@ -234,8 +297,12 @@ export async function getPnlStats(): Promise<PnlStats> {
   };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET DAY STATS
+// ─────────────────────────────────────────────────────────────────────────────
 export async function getDayStats(year: number, month: number): Promise<DayStats[]> {
   const userId = await getUserId();
+  if (!userId) return [];
   const supabase = await createClient();
 
   const start = format(new Date(year, month - 1, 1), "yyyy-MM-dd");
@@ -250,7 +317,9 @@ export async function getDayStats(year: number, month: number): Promise<DayStats
 
   const map = new Map<string, DayStats>();
   for (const t of data ?? []) {
-    const existing = map.get(t.date) ?? { date: t.date, total_pnl: 0, trade_count: 0, wins: 0, losses: 0 };
+    const existing = map.get(t.date) ?? {
+      date: t.date, total_pnl: 0, trade_count: 0, wins: 0, losses: 0,
+    };
     existing.total_pnl   += Number(t.profit_loss);
     existing.trade_count += 1;
     if (t.status === "WIN")  existing.wins   += 1;
@@ -261,8 +330,12 @@ export async function getDayStats(year: number, month: number): Promise<DayStats
   return Array.from(map.values());
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GET RECENT TRADES
+// ─────────────────────────────────────────────────────────────────────────────
 export async function getRecentTrades(limit = 10): Promise<Trade[]> {
   const userId = await getUserId();
+  if (!userId) return [];
   const supabase = await createClient();
 
   const { data } = await supabase
@@ -276,8 +349,14 @@ export async function getRecentTrades(limit = 10): Promise<Trade[]> {
   return (data ?? []) as Trade[];
 }
 
-export async function getPnlChartData(): Promise<{ date: string; pnl: number; cumulative: number }[]> {
+// ─────────────────────────────────────────────────────────────────────────────
+// GET PNL CHART DATA
+// ─────────────────────────────────────────────────────────────────────────────
+export async function getPnlChartData(): Promise<
+  { date: string; pnl: number; cumulative: number }[]
+> {
   const userId = await getUserId();
+  if (!userId) return [];
   const supabase = await createClient();
 
   const yearStart = format(startOfYear(new Date()), "yyyy-MM-dd");
