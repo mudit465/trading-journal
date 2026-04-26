@@ -146,7 +146,7 @@ export default function RegisterPage() {
               {errors.confirmPassword && <p className="text-xs text-red-400">{errors.confirmPassword.message}</p>}
             </div>
 
-            <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting || googleLoading}>
+            <Button type="submit" variant="default" className="w-full" disabled={isSubmitting || googleLoading}>
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               Create account
             </Button>

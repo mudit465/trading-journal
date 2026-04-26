@@ -726,7 +726,7 @@ export function TradeForm({ concepts = [], defaultDate, trade, onSuccess }: Trad
 
       {/* ── Submit ─────────────────────────────────────────────────── */}
       <div className="flex gap-3 pt-1">
-        <Button type="submit" variant="primary" className="flex-1" disabled={isPending}>
+        <Button type="submit" variant="default" className="flex-1" disabled={isPending}>
           {isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
           {isEdit ? "Save changes" : "Log trade"}
         </Button>
