@@ -20,7 +20,7 @@ type Mode = "cumulative" | "daily";
 
 // ── Custom Tooltip ────────────────────────────────────────────────────────────
 
-const CustomTooltip = memo(({ active, payload }: TooltipProps<number, string>) => {
+const CustomTooltip = memo(({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
 
   const point = payload[0].payload as ChartPoint;
