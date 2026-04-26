@@ -173,9 +173,9 @@ Total trades: ${stats.total_trades}
 
           {/* 🤖 AI Coach */}
           <AIInsights 
-            initialInsight={insight} 
-            stats={stats} 
-          />
+  initialInsight={Array.isArray(insight) ? insight.join("\n") : insight}
+  stats={stats}
+/>
 
           {/* Recent Trades */}
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
