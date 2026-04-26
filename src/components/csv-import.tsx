@@ -37,7 +37,7 @@ export type MappedTrade = {
 
 /* ───────────────── MAPPER ───────────────── */
 
-function mapRowToTrade(row: RawCSVRow): MappedTrade | null {
+function mapRowToTrade(row: any): any {
   console.log("📥 Raw row:", row);
 
   const date = row.date || row.Date;

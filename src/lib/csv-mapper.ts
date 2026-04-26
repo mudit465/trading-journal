@@ -1,4 +1,4 @@
-function mapRowToTrade(row: RawCSVRow): MappedTrade | null {
+function mapRowToTrade(row: any): any {
   const dateRaw = row.date?.trim();
   const instrumentRaw = row.symbol?.trim();
   const rawPnl = row.pnl?.trim();
