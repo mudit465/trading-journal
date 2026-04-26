@@ -33,7 +33,7 @@ function ErrorContent() {
         <p className="text-sm text-zinc-500 mb-6">
           {errorMessages[error ?? "Default"] ?? errorMessages["Default"]}
         </p>
-        <Button variant="primary" asChild>
+        <Button variant="default" asChild>
           <Link href="/auth/login">Try again</Link>
         </Button>
       </div>
