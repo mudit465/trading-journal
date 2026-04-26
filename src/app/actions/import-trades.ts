@@ -24,7 +24,7 @@ export async function importTradesFromCSV(
   // ✅ use session user id
   const rows = trades.map((t) => ({
     ...t,
-    user_id: session.user.id,
+    user_id: session?.user?.id ?? "",
   }));
 
   console.log("📦 Rows to insert:", rows);
