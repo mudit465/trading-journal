@@ -78,7 +78,8 @@ export type Trade = {
   profit_loss: number;
 
   status: TradeStatus;
-
+  mistakes?: string | null;
+good_things?: string | null;
   notes?: string | null;
   concepts?: string[];
   tp_levels?: TakeProfitLevel[];
