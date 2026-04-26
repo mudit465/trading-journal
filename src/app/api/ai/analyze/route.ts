@@ -1,53 +1,78 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import OpenAI from "openai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-const SYSTEM_PROMPT = `You are an expert trading coach and journal analyst. You help traders identify mistakes, patterns, and areas for improvement in their trades.
-
-When analyzing a trade, provide:
-1. What was done well
-2. Key mistakes identified  
-3. Risk management assessment
-4. Actionable improvements for next time
-5. Pattern observations
-
-Be concise, specific, and constructive. Use bullet points for clarity. Don't be harsh — focus on growth.`;
+const GROQ_API_KEY = process.env.GROQ_API_KEY ?? "";
+const GROQ_MODEL = "llama-3.1-8b-instant"; // ✅ safe + fast
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { messages } = await req.json();
-
-    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "your_openai_api_key") {
+    if (!GROQ_API_KEY) {
       return NextResponse.json({
-        content: "AI analysis is not configured. Please add your OPENAI_API_KEY to the .env.local file to enable this feature.",
+        content: "❌ GROQ_API_KEY missing in .env.local",
       });
     }
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        ...messages,
-      ],
-      max_tokens: 600,
-      temperature: 0.7,
-    });
+    const { messages, trade } = await req.json();
+
+    if (!trade) {
+      return NextResponse.json({
+        content: "❌ No trade data received",
+      });
+    }
+
+    const SYSTEM_PROMPT = `
+You are a strict professional trading coach.
+
+IMPORTANT RULES:
+- If trade data is inconsistent (e.g. WIN but negative P&L), point it out clearly
+- Do NOT blindly trust labels — verify with numbers
+- Focus on risk management, execution discipline, and logic
+- Call out serious mistakes directly (no sugarcoating)
+- Keep response under 150 words, clear and actionable
+`;
+
+const groqMessages = [
+  { role: "system", content: SYSTEM_PROMPT }, // 🔥 ADD THIS LINE
+  ...messages // your existing messages from frontend
+];
+
+    const res = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: GROQ_MODEL,
+          messages: groqMessages,
+          temperature: 0.7,
+        }),
+      }
+    );
+
+    // 🔥 SHOW REAL ERROR
+    if (!res.ok) {
+      const err = await res.text();
+      console.error("Groq error:", err);
+
+      return NextResponse.json({
+        content: `❌ Groq error: ${err}`,
+      });
+    }
+
+    const data = await res.json();
+
+    const reply =
+      data.choices?.[0]?.message?.content?.trim() ?? "No response";
+
+    return NextResponse.json({ content: reply });
+
+  } catch (err) {
+    console.error("AI ERROR:", err);
 
     return NextResponse.json({
-      content: completion.choices[0].message.content ?? "No response generated.",
+      content: "❌ Server error while analyzing trade",
     });
-  } catch (error) {
-    console.error("AI analysis error:", error);
-    return NextResponse.json(
-      { content: "Failed to generate analysis. Please try again." },
-      { status: 500 }
-    );
   }
 }

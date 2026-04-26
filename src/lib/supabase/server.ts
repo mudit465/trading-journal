@@ -1,10 +1,12 @@
+// src/lib/supabase/server.ts
+
 import { createServerClient } from "@supabase/ssr";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
-// ==============================
-// USER CLIENT
-// ==============================
+// ─────────────────────────────────────────────
+// USER CLIENT (RLS enforced)
+// ─────────────────────────────────────────────
 export async function createClient() {
   const cookieStore = await cookies();
 
@@ -14,6 +16,7 @@ export async function createClient() {
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
+
         setAll: (cookiesToSet: any[]) => {
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
@@ -28,12 +31,23 @@ export async function createClient() {
   );
 }
 
-// ==============================
-// ADMIN CLIENT
-// ==============================
+// ─────────────────────────────────────────────
+// ADMIN CLIENT (BYPASSES RLS ⚠️ SERVER ONLY)
+// ─────────────────────────────────────────────
 export function createAdminClient() {
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+  if (!url || !serviceKey) {
+    throw new Error(
+      "Missing SUPABASE_SERVICE_ROLE_KEY or SUPABASE_URL in env"
+    );
+  }
+
+  return createSupabaseClient(url, serviceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 }

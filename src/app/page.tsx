@@ -1,6 +1,8 @@
+// src/app/page.tsx
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, BarChart3, Calendar, StickyNote, Bot, Shield } from "lucide-react";
+
 
 const features = [
   {
@@ -48,7 +50,7 @@ export default function HomePage() {
           <Button variant="ghost" size="sm" asChild>
             <Link href="/auth/login">Sign in</Link>
           </Button>
-          <Button variant="primary" size="sm" asChild>
+          <Button size="sm" asChild>
             <Link href="/auth/register">Get started</Link>
           </Button>
         </div>
@@ -69,12 +71,12 @@ export default function HomePage() {
         </h1>
 
         <p className="text-zinc-500 text-lg leading-relaxed mb-10 max-w-xl">
-          Log trades, track PnL across timeframes, review with AI, and build the discipline 
+          Log trades, track PnL across timeframes, review with AI, and build the discipline
           to become a consistently profitable trader.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button variant="primary" size="lg" asChild>
+          <Button size="lg" asChild>
             <Link href="/auth/register">Start journaling — it&apos;s free</Link>
           </Button>
           <Button variant="outline" size="lg" asChild>

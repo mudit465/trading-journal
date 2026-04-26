@@ -18,7 +18,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const supabase = await createAdminClient();
+        const supabase = createAdminClient();
         const { data, error } = await supabase.auth.signInWithPassword({
           email: credentials.email as string,
           password: credentials.password as string,
@@ -38,8 +38,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google" && user.email) {
-        const supabase = await createAdminClient();
-        const { error } = await supabase.auth.admin.createUser({
+        const supabase = createAdminClient();
+
+        // Try to create the user (ignore if already exists)
+        await supabase.auth.admin.createUser({
           email: user.email,
           email_confirm: true,
           user_metadata: {
@@ -48,19 +50,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             provider: "google",
           },
         });
-        // Ignore "already exists" errors
-        if (error && !error.message.includes("already been registered")) {
-          return false;
+
+        // ✅ Correct way to look up user by email using admin API
+        const { data: { users }, error } = await supabase.auth.admin.listUsers();
+        if (!error) {
+          const match = users.find((u) => u.email === user.email);
+          if (match) user.id = match.id;
         }
-
-        // Get Supabase user ID
-        const { data } = await supabase
-          .from("auth.users")
-          .select("id")
-          .eq("email", user.email)
-          .single();
-
-        if (data) user.id = data.id;
       }
       return true;
     },

@@ -12,10 +12,11 @@ import {
   LogOut,
   Settings,
   Tag,
+  TableProperties,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+
+import { cn, getInitials } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getInitials } from "@/lib/utils";
 import type { Session } from "@/types";
 
 const navItems = [
@@ -23,6 +24,7 @@ const navItems = [
   { href: "/journal", label: "Journal", icon: Calendar },
   { href: "/notes", label: "Notes", icon: StickyNote },
   { href: "/concepts", label: "Concepts", icon: Tag },
+  { href: "/all-trades", label: "All Trades", icon: TableProperties },
 ];
 
 type SidebarProps = {
@@ -38,7 +40,9 @@ export function Sidebar({ session }: SidebarProps) {
       <div className="px-4 py-5 border-b border-zinc-900">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-indigo-400" />
-          <span className="font-semibold text-zinc-100 text-sm tracking-tight">TradeLog</span>
+          <span className="font-semibold text-zinc-100 text-sm tracking-tight">
+            TradeLog
+          </span>
         </div>
       </div>
 
@@ -56,10 +60,13 @@ export function Sidebar({ session }: SidebarProps) {
         </Link>
       </div>
 
-      {/* Nav */}
+      {/* Navigation */}
       <nav className="flex-1 px-3 py-2 space-y-0.5">
         {navItems.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
+          const active =
+            pathname === item.href ||
+            pathname.startsWith(item.href + "/");
+
           return (
             <Link
               key={item.href}
@@ -78,7 +85,7 @@ export function Sidebar({ session }: SidebarProps) {
         })}
       </nav>
 
-      {/* Bottom */}
+      {/* Bottom section */}
       <div className="px-3 pb-4 space-y-0.5 border-t border-zinc-900 pt-3">
         <Link
           href="/settings"
@@ -90,8 +97,9 @@ export function Sidebar({ session }: SidebarProps) {
           )}
         >
           <Settings className="h-4 w-4 shrink-0" />
-          Settings
+          Profile
         </Link>
+
         <button
           onClick={() => signOut({ callbackUrl: "/" })}
           className="flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-sm transition-colors text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
@@ -104,11 +112,18 @@ export function Sidebar({ session }: SidebarProps) {
         <div className="flex items-center gap-2.5 px-3 py-2 mt-1">
           <Avatar className="h-6 w-6">
             <AvatarImage src={session.user.image ?? undefined} />
-            <AvatarFallback className="text-[10px]">{getInitials(session.user.name)}</AvatarFallback>
+            <AvatarFallback className="text-[10px]">
+              {getInitials(session.user.name)}
+            </AvatarFallback>
           </Avatar>
+
           <div className="min-w-0">
-            <p className="text-xs font-medium text-zinc-300 truncate">{session.user.name}</p>
-            <p className="text-[10px] text-zinc-600 truncate">{session.user.email}</p>
+            <p className="text-xs font-medium text-zinc-300 truncate">
+              {session.user.name}
+            </p>
+            <p className="text-[10px] text-zinc-600 truncate">
+              {session.user.email}
+            </p>
           </div>
         </div>
       </div>

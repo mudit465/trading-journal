@@ -12,24 +12,29 @@ import { DeleteTradeButton } from "@/components/trades/delete-trade-button";
 
 type TradeDetailPageProps = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ ref?: string }>;
 };
 
-export default async function TradeDetailPage({ params }: TradeDetailPageProps) {
+export default async function TradeDetailPage({ params, searchParams }: TradeDetailPageProps) {
   const { id } = await params;
+  const { ref } = await searchParams;
   const trade = await getTradeById(id);
 
   if (!trade) notFound();
+
+  const backHref = ref === "all-trades" ? "/all-trades" : `/journal/${trade.date}`;
+  const backLabel = ref === "all-trades" ? "All Trades" : format(parseISO(trade.date), "MMM d");
 
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <Link
-          href={`/journal/${trade.date}`}
+          href={backHref}
           className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />
-          {format(parseISO(trade.date), "MMM d")}
+          {backLabel}
         </Link>
         <div className="flex items-center gap-2">
           <DeleteTradeButton tradeId={trade.id} date={trade.date} />

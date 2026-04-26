@@ -1,42 +1,36 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs))
 }
 
-export function formatCurrency(value: number, currency = "USD"): string {
+export function formatCurrency(value: number) {
+  if (isNaN(value)) return "$0.00";
+
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency,
+    currency: "USD",
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
   }).format(value);
 }
 
-export function formatPnl(value: number): string {
-  const formatted = formatCurrency(Math.abs(value));
-  return value >= 0 ? `+${formatted}` : `-${formatted}`;
-}
-
-export function getPnlColor(value: number): string {
+export function getPnlColor(value: number) {
   if (value > 0) return "text-emerald-400";
   if (value < 0) return "text-red-400";
   return "text-zinc-400";
 }
 
-export function getPnlBg(value: number): string {
-  if (value > 0) return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-  if (value < 0) return "bg-red-500/10 text-red-400 border-red-500/20";
-  return "bg-zinc-500/10 text-zinc-400 border-zinc-500/20";
-}
+export function getInitials(name: string) {
+  if (!name) return "U";
 
-export function getInitials(name?: string | null): string {
-  if (!name) return "?";
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const parts = name.trim().split(" ");
+
+  if (parts.length === 1) {
+    return parts[0][0]?.toUpperCase() ?? "U";
+  }
+
+  return (
+    (parts[0][0] ?? "") + (parts[1][0] ?? "")
+  ).toUpperCase();
 }

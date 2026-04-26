@@ -13,7 +13,6 @@ type DayPageProps = {
 export default async function DayPage({ params }: DayPageProps) {
   const { date } = await params;
   const trades = await getTradesByDate(date);
-
   const totalPnl = trades.reduce((s, t) => s + Number(t.profit_loss), 0);
   const wins = trades.filter((t) => t.status === "WIN").length;
   const losses = trades.filter((t) => t.status === "LOSS").length;
@@ -82,4 +81,4 @@ export default async function DayPage({ params }: DayPageProps) {
       )}
     </div>
   );
-}
+} 
