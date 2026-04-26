@@ -101,7 +101,7 @@ export default async function TradeDetailPage({ params, searchParams }: TradeDet
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
           <h2 className="text-sm font-medium text-zinc-300 mb-3">Take profit levels</h2>
           <div className="space-y-2">
-            {trade.tp_levels.map((tp) => (
+            {trade.tp_levels.map((tp: any) => (
               <div
                 key={tp.level}
                 className={cn(
