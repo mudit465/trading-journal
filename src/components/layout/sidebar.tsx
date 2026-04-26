@@ -113,7 +113,7 @@ export function Sidebar({ session }: SidebarProps) {
           <Avatar className="h-6 w-6">
             <AvatarImage src={session.user.image ?? undefined} />
             <AvatarFallback className="text-[10px]">
-              {getInitials(session.user.name)}
+              {getInitials(session.user.name || "User")}
             </AvatarFallback>
           </Avatar>
 
