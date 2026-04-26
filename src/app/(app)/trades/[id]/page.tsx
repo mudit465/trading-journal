@@ -126,7 +126,7 @@ export default async function TradeDetailPage({ params, searchParams }: TradeDet
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
           <h2 className="text-sm font-medium text-zinc-300 mb-3">Concepts used</h2>
           <div className="flex flex-wrap gap-2">
-            {trade.concepts.map((c) => (
+            {trade.concepts.map((c: any) => (
               <span
                 key={c}
                 className="text-xs px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
