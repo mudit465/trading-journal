@@ -53,7 +53,7 @@ export default async function DayPage({ params }: DayPageProps) {
             </div>
           )}
         </div>
-        <Button variant="primary" size="sm" asChild>
+        <Button variant="default" size="sm" asChild>
           <Link href={`/trades/new?date=${date}`}>
             <Plus className="h-4 w-4" />
             Add trade
