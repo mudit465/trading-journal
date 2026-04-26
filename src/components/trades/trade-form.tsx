@@ -224,7 +224,7 @@ export function TradeForm({ concepts = [], defaultDate, trade, onSuccess }: Trad
         // Build payload using ONLY columns that exist in TradeFormData / DB schema.
         // entry_price, exit_price, position_size, mistakes, good_things are
         // local-only calculation helpers — never sent to Supabase.
-        const payload: TradeFormData = {
+        const payload: any = {
           date:        entryDate || new Date().toISOString().split("T")[0],
           instrument:  data.instrument,
           direction:   data.direction,
