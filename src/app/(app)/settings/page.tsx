@@ -23,12 +23,12 @@ export default async function SettingsPage() {
         <h2 className="text-sm font-medium text-zinc-300">Account</h2>
 
         <div className="flex items-center gap-4">
-          <Avatar className="h-14 w-14">
-            <AvatarImage src={session?.user?.image ?? undefined} />
-            <AvatarFallback className="text-lg">
-              {getInitials(session?.user?.name)}
-            </AvatarFallback>
-          </Avatar>
+  <Avatar className="h-14 w-14">
+    <AvatarImage src={session?.user?.image ?? undefined} />
+    <AvatarFallback className="text-lg">
+      {getInitials(session?.user?.name || "User")}
+    </AvatarFallback>
+  </Avatar>
 
           <div>
             <p className="font-medium text-zinc-100">
