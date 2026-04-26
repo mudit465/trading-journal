@@ -615,7 +615,7 @@ export function TradeForm({ concepts = [], defaultDate, trade, onSuccess }: Trad
         {trade?.attachments && trade.attachments.length > 0 && (
           <div className="space-y-2">
             <p className="text-xs text-zinc-600 font-medium">Existing attachments</p>
-            {trade.attachments.map((att) => (
+            {trade.attachments.map((att: any) => (
               <a key={att.id} href={att.file_url} target="_blank" rel="noreferrer"
                 className="flex items-center gap-3 text-xs text-indigo-400 hover:text-indigo-300
                            bg-zinc-800/50 rounded-lg px-3 py-2.5 border border-zinc-700/50 transition-colors">

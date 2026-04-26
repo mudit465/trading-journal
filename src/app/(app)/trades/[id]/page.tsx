@@ -143,7 +143,7 @@ export default async function TradeDetailPage({ params, searchParams }: TradeDet
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
           <h2 className="text-sm font-medium text-zinc-300 mb-3">Attachments</h2>
           <div className="space-y-2">
-            {trade.attachments.map((att) => (
+            {trade.attachments.map((att: any) => (
               <a
                 key={att.id}
                 href={att.file_url}
