@@ -82,7 +82,7 @@ export default async function TradeDetailPage({ params, searchParams }: TradeDet
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {[
           { label: "Risk", value: formatCurrency(trade.risk_amount) },
           { label: "RR Ratio", value: `${trade.rr_ratio}R` },

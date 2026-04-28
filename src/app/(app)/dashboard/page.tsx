@@ -64,7 +64,7 @@ Total trades: ${stats.total_trades}
         )}
 
       {/* PnL Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <PnlCard label="Today" value={stats.daily} />
         <PnlCard label="This week" value={stats.weekly} />
         <PnlCard label="This month" value={stats.monthly} />
@@ -104,7 +104,7 @@ Total trades: ${stats.total_trades}
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
           <p className="text-xs text-zinc-500 mb-1">Win rate</p>
           <p className="text-2xl font-bold text-zinc-100">
