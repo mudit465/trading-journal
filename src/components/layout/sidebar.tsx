@@ -18,7 +18,7 @@ import {
 
 import { cn, getInitials } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import type { Session } from "next-auth";
+import type { Session } from "@/types";
 
 const navItems = [
   { href: "/dashboard",  label: "Dashboard",  icon: LayoutDashboard },
@@ -30,20 +30,25 @@ const navItems = [
 
 type SidebarProps = {
   session: Session;
-  /**
-   * Called after any nav link or action is clicked.
-   * On desktop this is a no-op; on mobile it closes the drawer.
-   */
   onNavigate?: () => void;
 };
 
 export function Sidebar({ session, onNavigate }: SidebarProps) {
   const pathname = usePathname();
 
+  /*
+   * ⚠️  KEY FIX: The original component wrapped everything in its own
+   *    <aside className="flex flex-col w-56 ... min-h-screen">
+   *
+   * That inner <aside> was ALWAYS "flex" — it ignored the parent's
+   * "hidden md:flex" completely, so the sidebar was always visible on mobile.
+   *
+   * Fix: The sidebar component now renders a plain <div> that fills
+   * whatever container the parent gives it. The parent (AppShell) is
+   * solely responsible for showing/hiding and setting the width.
+   */
   return (
-    // Full-height, full-width of whatever container it sits in.
-    // No hardcoded w-56 here — the parent (AppShell) controls width.
-    <aside className="flex flex-col w-full h-full border-r border-zinc-900 bg-zinc-950">
+    <div className="flex flex-col w-full h-full border-r border-zinc-900 bg-zinc-950">
 
       {/* Logo */}
       <div className="px-4 py-5 border-b border-zinc-900 flex-shrink-0">
@@ -76,7 +81,6 @@ export function Sidebar({ session, onNavigate }: SidebarProps) {
           const active =
             pathname === item.href ||
             pathname.startsWith(item.href + "/");
-
           return (
             <Link
               key={item.href}
@@ -96,7 +100,7 @@ export function Sidebar({ session, onNavigate }: SidebarProps) {
         })}
       </nav>
 
-      {/* Bottom: settings, sign out, user avatar */}
+      {/* Bottom: settings, sign out, user */}
       <div className="px-3 pb-4 space-y-0.5 border-t border-zinc-900 pt-3 flex-shrink-0">
         <Link
           href="/settings"
@@ -113,35 +117,30 @@ export function Sidebar({ session, onNavigate }: SidebarProps) {
         </Link>
 
         <button
-          onClick={() => {
-            onNavigate?.();
-            signOut({ callbackUrl: "/" });
-          }}
+          onClick={() => { onNavigate?.(); signOut({ callbackUrl: "/" }); }}
           className="flex items-center gap-2.5 w-full rounded-lg px-3 py-2 text-sm transition-colors text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           Sign out
         </button>
 
-    {/* User info */}
-<div className="flex items-center gap-2.5 px-3 py-2 mt-1">
-  <Avatar className="h-6 w-6 flex-shrink-0">
-    <AvatarImage src={session?.user?.image ?? undefined} />
-    <AvatarFallback className="text-[10px]">
-      {getInitials(session?.user?.name || "User")}
-    </AvatarFallback>
-  </Avatar>
-
-  <div className="min-w-0">
-    <p className="text-xs font-medium text-zinc-300 truncate">
-      {session?.user?.name || "User"}
-    </p>
-    <p className="text-[10px] text-zinc-600 truncate">
-      {session?.user?.email || ""}
-    </p>
-  </div>
-</div>
+        <div className="flex items-center gap-2.5 px-3 py-2 mt-1">
+          <Avatar className="h-6 w-6 flex-shrink-0">
+            <AvatarImage src={session.user.image ?? undefined} />
+            <AvatarFallback className="text-[10px]">
+              {getInitials(session.user.name || "User")}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-zinc-300 truncate">
+              {session.user.name}
+            </p>
+            <p className="text-[10px] text-zinc-600 truncate">
+              {session.user.email}
+            </p>
+          </div>
+        </div>
       </div>
-    </aside>
+    </div>
   );
 }
