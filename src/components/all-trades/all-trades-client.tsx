@@ -1,3 +1,4 @@
+// src/components/all-trades/all-trades-client.tsx
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
@@ -163,7 +164,11 @@ export function AllTradesClient({ trades }: Props) {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="p-6 max-w-6xl mx-auto animate-fade-in space-y-5">
+    /*
+     * px-4 sm:px-6 — breathing room on mobile
+     * w-full max-w-6xl — never exceeds container
+     */
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-6 animate-fade-in space-y-5">
 
       {/* Header */}
       <div>
@@ -171,15 +176,17 @@ export function AllTradesClient({ trades }: Props) {
         <p className="text-sm text-zinc-500 mt-0.5">Your complete trading history</p>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* Summary cards
+          FIX: was grid-cols-3 (breaks at ~320px, text overflows narrow cells)
+          Now: 1-col on smallest phones, 3-col from sm (640px) onward */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 flex items-center gap-3">
           <div className="h-8 w-8 rounded-lg bg-zinc-800 flex items-center justify-center shrink-0">
             <Activity className="h-4 w-4 text-zinc-400" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs text-zinc-500">Total trades</p>
-            <p className="text-xl font-bold text-zinc-100">{summary.total}</p>
+            <p className="text-xl font-bold text-zinc-100 tabular-nums">{summary.total}</p>
           </div>
         </div>
 
@@ -187,9 +194,9 @@ export function AllTradesClient({ trades }: Props) {
           <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
             <TrendingUp className="h-4 w-4 text-emerald-400" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs text-zinc-500">Win rate</p>
-            <p className="text-xl font-bold text-zinc-100">{summary.winRate}%</p>
+            <p className="text-xl font-bold text-zinc-100 tabular-nums">{summary.winRate}%</p>
           </div>
         </div>
 
@@ -203,109 +210,116 @@ export function AllTradesClient({ trades }: Props) {
               : <ArrowDownRight className="h-4 w-4 text-red-400" />
             }
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs text-zinc-500">Net PnL</p>
-            <p className={cn("text-xl font-bold", getPnlColor(summary.netPnl))}>
+            <p className={cn("text-xl font-bold tabular-nums truncate", getPnlColor(summary.netPnl))}>
               {summary.netPnl >= 0 ? "+" : ""}{formatCurrency(summary.netPnl)}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Toolbar */}
+      {/* Search + filter bar */}
       <div className="flex items-center gap-2 flex-wrap">
-        {/* Search */}
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500 pointer-events-none" />
+        {/* Search — min-w-0 + flex-1 lets it shrink on mobile */}
+        <div className="relative flex-1 min-w-[160px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
           <input
             type="text"
-            placeholder="Search instrument, concept, notes…"
+            placeholder="Search trades..."
             value={filters.search}
             onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-9 pr-3 py-2
-                       text-sm text-zinc-200 placeholder:text-zinc-600 outline-none
-                       focus:border-indigo-500/40 focus:ring-1 focus:ring-indigo-500/20 transition-colors"
+            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-9 pr-3 py-2 text-sm text-zinc-300 placeholder:text-zinc-600 outline-none focus:border-indigo-500/40 transition-colors"
           />
         </div>
 
-        {/* Filter toggle */}
         <button
           onClick={() => setFiltersOpen((v) => !v)}
           className={cn(
             "flex items-center gap-2 rounded-lg px-3 py-2 text-sm border transition-colors",
             filtersOpen || hasActiveFilters
-              ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-400"
-              : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"
+              ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
+              : "text-zinc-500 border-zinc-800 hover:text-zinc-300 hover:border-zinc-700"
           )}
         >
           <SlidersHorizontal className="h-3.5 w-3.5" />
-          Filters
-          {hasActiveFilters && <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />}
+          <span className="hidden sm:inline">Filters</span>
+          {hasActiveFilters && (
+            <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+          )}
         </button>
-
-        {/* Sort shortcuts */}
-        <div className="flex items-center gap-1">
-          {([
-            { key: "date" as SortKey, label: "Newest" },
-            { key: "profit_loss" as SortKey, label: "Best PnL" },
-            { key: "rr_ratio" as SortKey, label: "Best RR" },
-          ]).map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => toggleSort(key)}
-              className={cn(
-                "px-3 py-1.5 rounded-lg text-xs border transition-colors",
-                sort.key === key
-                  ? "bg-zinc-800 border-zinc-700 text-zinc-100"
-                  : "bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300"
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
 
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
             className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
           >
-            <X className="h-3 w-3" /> Clear
+            <X className="h-3 w-3" />
+            Clear
           </button>
         )}
       </div>
 
-      {/* Filter panel */}
+      {/* Expanded filters */}
       {filtersOpen && (
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {[
-            { label: "Result", key: "status" as keyof Filters, options: [
-              { value: "WIN", label: "Win" },
-              { value: "LOSS", label: "Loss" },
-              { value: "BREAKEVEN", label: "Breakeven" },
-            ]},
-            { label: "Instrument", key: "instrument" as keyof Filters, options: instruments.map(i => ({ value: i, label: i })) },
-            { label: "Concept", key: "concept" as keyof Filters, options: concepts.map(c => ({ value: c, label: c })) },
-            { label: "Session", key: "session" as keyof Filters, options: sessions.map(s => ({ value: s, label: s })) },
-          ].map(({ label, key, options }) => (
-            <div key={key}>
-              <label className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1.5 block font-medium">{label}</label>
-              <select
-                value={filters[key]}
-                onChange={(e) => setFilters((f) => ({ ...f, [key]: e.target.value }))}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5
-                           text-xs text-zinc-300 outline-none focus:border-indigo-500/40 cursor-pointer"
-              >
-                <option value="">All</option>
-                {options.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-          ))}
-
+          {/* Status */}
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1.5 block font-medium">From</label>
+            <label className="block text-[10px] text-zinc-600 mb-1.5 uppercase tracking-wider">Status</label>
+            <select
+              value={filters.status}
+              onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-zinc-300 outline-none focus:border-indigo-500/40 [color-scheme:dark]"
+            >
+              <option value="">All</option>
+              <option value="WIN">Win</option>
+              <option value="LOSS">Loss</option>
+              <option value="BREAKEVEN">Breakeven</option>
+            </select>
+          </div>
+
+          {/* Instrument */}
+          <div>
+            <label className="block text-[10px] text-zinc-600 mb-1.5 uppercase tracking-wider">Instrument</label>
+            <select
+              value={filters.instrument}
+              onChange={(e) => setFilters((f) => ({ ...f, instrument: e.target.value }))}
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-zinc-300 outline-none focus:border-indigo-500/40 [color-scheme:dark]"
+            >
+              <option value="">All</option>
+              {instruments.map((i) => <option key={i} value={i}>{i}</option>)}
+            </select>
+          </div>
+
+          {/* Concept */}
+          <div>
+            <label className="block text-[10px] text-zinc-600 mb-1.5 uppercase tracking-wider">Concept</label>
+            <select
+              value={filters.concept}
+              onChange={(e) => setFilters((f) => ({ ...f, concept: e.target.value }))}
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-zinc-300 outline-none focus:border-indigo-500/40 [color-scheme:dark]"
+            >
+              <option value="">All</option>
+              {concepts.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+
+          {/* Session */}
+          <div>
+            <label className="block text-[10px] text-zinc-600 mb-1.5 uppercase tracking-wider">Session</label>
+            <select
+              value={filters.session}
+              onChange={(e) => setFilters((f) => ({ ...f, session: e.target.value }))}
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-zinc-300 outline-none focus:border-indigo-500/40 [color-scheme:dark]"
+            >
+              <option value="">All</option>
+              {sessions.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+
+          {/* Date From */}
+          <div>
+            <label className="block text-[10px] text-zinc-600 mb-1.5 uppercase tracking-wider">From</label>
             <input
               type="date"
               value={filters.dateFrom}
@@ -315,8 +329,9 @@ export function AllTradesClient({ trades }: Props) {
             />
           </div>
 
+          {/* Date To */}
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1.5 block font-medium">To</label>
+            <label className="block text-[10px] text-zinc-600 mb-1.5 uppercase tracking-wider">To</label>
             <input
               type="date"
               value={filters.dateTo}
@@ -328,7 +343,11 @@ export function AllTradesClient({ trades }: Props) {
         </div>
       )}
 
-      {/* Table */}
+      {/* Table
+          FIX: wrap in overflow-x-auto so the table scrolls horizontally
+          on mobile instead of blowing out the page width.
+          The parent div already has overflow-x-hidden, so this creates
+          a local scroll context just for the table — exactly right. */}
       <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 overflow-hidden">
         {filtered.length === 0 ? (
           <div className="py-16 text-center space-y-2">
@@ -343,6 +362,9 @@ export function AllTradesClient({ trades }: Props) {
             )}
           </div>
         ) : (
+          /* overflow-x-auto here creates a scrollable table container.
+             The table itself keeps w-full (which means min-content width
+             on overflow), so it never wraps columns awkwardly. */
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -365,6 +387,7 @@ export function AllTradesClient({ trades }: Props) {
                       RR <SortIcon col="rr_ratio" sort={sort} />
                     </button>
                   </th>
+                  {/* Less-critical columns hidden on small screens */}
                   <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 hidden lg:table-cell">Session</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-zinc-500 hidden xl:table-cell">Concepts</th>
                   <th className="text-right px-4 py-3 w-[70px]">
@@ -387,7 +410,7 @@ export function AllTradesClient({ trades }: Props) {
                       {format(parseISO(trade.date), "MMM d, yyyy")}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-medium text-zinc-200 group-hover:text-zinc-100 transition-colors">
+                      <span className="font-medium text-zinc-200 group-hover:text-zinc-100 transition-colors whitespace-nowrap">
                         {trade.instrument}
                       </span>
                     </td>
@@ -401,10 +424,10 @@ export function AllTradesClient({ trades }: Props) {
                         {trade.status}
                       </Badge>
                     </td>
-                    <td className={cn("px-4 py-3 text-right font-semibold tabular-nums text-xs", getPnlColor(trade.profit_loss))}>
+                    <td className={cn("px-4 py-3 text-right font-semibold tabular-nums text-xs whitespace-nowrap", getPnlColor(trade.profit_loss))}>
                       {trade.profit_loss >= 0 ? "+" : ""}{formatCurrency(trade.profit_loss)}
                     </td>
-                    <td className="px-4 py-3 text-right text-zinc-400 text-xs tabular-nums">
+                    <td className="px-4 py-3 text-right text-zinc-400 text-xs tabular-nums whitespace-nowrap">
                       {trade.rr_ratio}R
                     </td>
                     <td className="px-4 py-3 text-zinc-500 text-xs hidden lg:table-cell">

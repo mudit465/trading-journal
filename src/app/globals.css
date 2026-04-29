@@ -1,24 +1,38 @@
+/* src/app/globals.css */
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
-* {
+/* ── Box sizing ───────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
+/* ── Overflow prevention (mobile fix) ────────────────────────────────────── */
+/*
+ * The single most impactful rule. Prevents any rogue element (wide table,
+ * long URL, chart, etc.) from creating horizontal scroll on mobile.
+ * overflow-x: hidden on html + body is belt-and-suspenders.
+ */
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+  /* Ensure the root never creates a horizontal scroll context */
+  max-width: 100%;
 }
 
 body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   overflow-x: hidden;
+  /* Prevent rubber-band horizontal scroll on iOS Safari */
+  overscroll-behavior-x: none;
 }
 
-/* Custom scrollbar */
+/* ── Custom scrollbar ─────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 4px;
   height: 4px;
@@ -34,10 +48,10 @@ body {
   background: #52525b;
 }
 
-/* Animations */
+/* ── Animations ───────────────────────────────────────────────────────────── */
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0);   }
 }
 
 .animate-fade-in {
@@ -45,18 +59,15 @@ body {
 }
 
 @keyframes slide-in {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0);   }
 }
 
 .animate-slide-in {
   animation: slide-in 0.25s ease-out;
 }
 
+/* ── Theme tokens ─────────────────────────────────────────────────────────── */
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: var(--font-sans);
