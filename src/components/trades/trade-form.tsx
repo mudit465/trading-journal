@@ -292,7 +292,7 @@ export function TradeForm({ concepts = [], defaultDate, trade, onSuccess }: Trad
       <section className={sectionCls}>
         <h2 className={sectionTitleCls}>Trade details</h2>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label>Instrument</Label>
             <InstrumentSelector
@@ -336,7 +336,7 @@ export function TradeForm({ concepts = [], defaultDate, trade, onSuccess }: Trad
             defaultValue={trade?.session ?? undefined}
             onValueChange={(v) => setValue("session", v as TradeFormValues["session"])}
           >
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Select session" />
             </SelectTrigger>
             <SelectContent>
@@ -351,7 +351,7 @@ export function TradeForm({ concepts = [], defaultDate, trade, onSuccess }: Trad
         </div>
 
         {/* Entry + Exit — each in their own card, side-by-side */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3 space-y-2">
             <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Entry</p>
             <DateTimePicker
@@ -381,7 +381,7 @@ export function TradeForm({ concepts = [], defaultDate, trade, onSuccess }: Trad
       {/* ── Prices & Size ──────────────────────────────────────────── */}
       <section className={sectionCls}>
         <h2 className={sectionTitleCls}>Prices & size</h2>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1.5">
             <Label>Entry price</Label>
             <Input type="number" step="any" placeholder="0.00000" {...register("entry_price")} />
@@ -400,7 +400,7 @@ export function TradeForm({ concepts = [], defaultDate, trade, onSuccess }: Trad
       {/* ── Risk Management ────────────────────────────────────────── */}
       <section className={sectionCls}>
         <h2 className={sectionTitleCls}>Risk management</h2>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="space-y-1.5">
             <Label>Risk ($)</Label>
             <Input type="number" step="0.01" placeholder="0.00" {...register("risk_amount")} />
